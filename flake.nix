@@ -6,6 +6,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
     jail-nix.url = "sourcehut:~alexdavid/jail.nix";
     flake-utils.url = "github:numtide/flake-utils";
+    llm-agents.url = "github:numtide/llm-agents.nix";
   };
 
   outputs = {
@@ -13,6 +14,7 @@
     nixpkgs,
     jail-nix,
     flake-utils,
+    llm-agents,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (system: let
@@ -61,8 +63,8 @@
           ++ [
             # Give it a safe spot for its own config and cache.
             # This also lets it remember things between sessions.
-            (try-readwrite (noescape "~/.config/crush"))
             (try-readwrite (noescape "~/.local/share/crush"))
+            (try-readwrite (noescape "~/.config/crush"))
 
             (add-pkg-deps commonPkgs)
             (add-pkg-deps extraPkgs)
@@ -83,6 +85,19 @@
             (add-pkg-deps extraPkgs)
           ]
         ));
+
+      makeJailedLetta = {extraPkgs ? []}:
+        jail "letta" llm-agents.packages.${system}.letta-code (with jail.combinators; (
+          commonJailOptions
+          ++ [
+            # Give it a safe spot for its own config and cache.
+            # This also lets it remember things between sessions.
+            gui # for opening ade browser
+            (try-readwrite (noescape "~/.letta"))
+            (add-pkg-deps commonPkgs)
+            (add-pkg-deps extraPkgs)
+          ]
+        ));
     in {
       lib = {
         inherit makeJailedCrush;
@@ -96,6 +111,7 @@
           pkgs.zsh
           (makeJailedCrush {})
           (makeJailedOpencode {})
+          (makeJailedLetta {})
         ];
 
         shellHook = ''
