@@ -1,11 +1,15 @@
 {
+  description = "flake for jailed agents";
+
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
     jail-nix.url = "sourcehut:~alexdavid/jail.nix";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
   outputs = {
+    nixpkgs-unstable,
     nixpkgs,
     jail-nix,
     flake-utils,
@@ -16,13 +20,13 @@
         inherit system;
         config.allowUnfree = true;
       };
+      pkgs-unstable = import nixpkgs-unstable {
+        inherit system;
+      };
+
       jail = jail-nix.lib.init pkgs;
 
-      # I'm using crush and opencode, but you could swap in others.
-      crush-pkg = pkgs.${system}.crush;
-      opencode-pkg = pkgs.${system}.opencode;
-
-      # Common packages available to both agents
+      # Common packages available to agents
       commonPkgs = with pkgs; [
         bashInteractive
         curl
@@ -51,13 +55,13 @@
 
       # --- 2. The Sandboxes ---
       makeJailedCrush = {extraPkgs ? []}:
-        jail "jailed-crush" crush-pkg (with jail.combinators; (
+        jail "crush" pkgs.crush (with jail.combinators; (
           commonJailOptions
           ++ [
             # Give it a safe spot for its own config and cache.
             # This also lets it remember things between sessions.
-            (readwrite (noescape "~/.config/crush"))
-            (readwrite (noescape "~/.local/share/crush"))
+            (try-readwrite (noescape "~/.config/crush"))
+            (try-readwrite (noescape "~/.local/share/crush"))
 
             (add-pkg-deps commonPkgs)
             (add-pkg-deps extraPkgs)
@@ -65,14 +69,14 @@
         ));
 
       makeJailedOpencode = {extraPkgs ? []}:
-        jail "jailed-opencode" opencode-pkg (with jail.combinators; (
+        jail "opencode" pkgs-unstable.opencode (with jail.combinators; (
           commonJailOptions
           ++ [
             # Give it a safe spot for its own config and cache.
             # This also lets it remember things between sessions.
-            (readwrite (noescape "~/.config/opencode"))
-            (readwrite (noescape "~/.local/share/opencode"))
-            (readwrite (noescape "~/.local/state/opencode"))
+            (try-readwrite (noescape "~/.config/opencode"))
+            (try-readwrite (noescape "~/.local/share/opencode"))
+            (try-readwrite (noescape "~/.local/state/opencode"))
 
             (add-pkg-deps commonPkgs)
             (add-pkg-deps extraPkgs)
@@ -84,12 +88,20 @@
         inherit makeJailedOpencode;
       };
 
-      # --- 3. Putting It All Together in the Dev Shell ---
       devShells.default = pkgs.mkShell {
-        packages = [
+        name = "jailed agents";
+
+        nativeBuildInputs = [pkgs.zsh];
+
+        buildInputs = [
+          pkgs.zsh
           (makeJailedCrush {})
           (makeJailedOpencode {})
         ];
+
+        shellHook = ''
+          echo welcome to jailed agents
+        '';
       };
     });
 }
