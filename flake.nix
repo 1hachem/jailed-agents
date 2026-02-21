@@ -56,7 +56,7 @@
 
       # --- 2. The Sandboxes ---
       makeJailedCrush = {extraPkgs ? []}:
-        jail "crush" pkgs-unstable.crush (with jail.combinators; (
+        jail "crush" pkgs.crush (with jail.combinators; (
           commonJailOptions
           ++ [
             # Give it a safe spot for its own config and cache.
