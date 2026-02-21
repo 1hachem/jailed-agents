@@ -20,6 +20,7 @@
         inherit system;
         config.allowUnfree = true;
       };
+
       pkgs-unstable = import nixpkgs-unstable {
         inherit system;
       };
@@ -55,7 +56,7 @@
 
       # --- 2. The Sandboxes ---
       makeJailedCrush = {extraPkgs ? []}:
-        jail "crush" pkgs.crush (with jail.combinators; (
+        jail "crush" pkgs-unstable.crush (with jail.combinators; (
           commonJailOptions
           ++ [
             # Give it a safe spot for its own config and cache.
@@ -91,9 +92,7 @@
       devShells.default = pkgs.mkShell {
         name = "jailed agents";
 
-        nativeBuildInputs = [pkgs.zsh];
-
-        buildInputs = [
+        packages = [
           pkgs.zsh
           (makeJailedCrush {})
           (makeJailedOpencode {})
