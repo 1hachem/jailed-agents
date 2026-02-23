@@ -115,6 +115,8 @@
       lib = {
         inherit makeJailedCrush;
         inherit makeJailedOpencode;
+        inherit makeJailedLetta;
+        inherit makeJailedForge;
       };
 
       devShells.default = pkgs.mkShell {
