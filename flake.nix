@@ -98,6 +98,19 @@
             (add-pkg-deps extraPkgs)
           ]
         ));
+
+      makeJailedForge = {extraPkgs ? []}:
+        jail "forge" llm-agents.packages.${system}.forge (with jail.combinators; (
+          commonJailOptions
+          ++ [
+            # Give it a safe spot for its own config and cache.
+            # This also lets it remember things between sessions.
+            gui # for opening ade browser
+            (try-readwrite (noescape "~/.forge"))
+            (add-pkg-deps commonPkgs)
+            (add-pkg-deps extraPkgs)
+          ]
+        ));
     in {
       lib = {
         inherit makeJailedCrush;
@@ -112,6 +125,7 @@
           (makeJailedCrush {})
           (makeJailedOpencode {})
           (makeJailedLetta {})
+          (makeJailedForge {})
         ];
 
         shellHook = ''
