@@ -56,27 +56,10 @@
         mount-cwd
       ];
 
-      # --- 2. The Sandboxes ---
-      makeJailedCrush = {extraPkgs ? []}:
-        jail "crush" pkgs.crush (with jail.combinators; (
-          commonJailOptions
-          ++ [
-            # Give it a safe spot for its own config and cache.
-            # This also lets it remember things between sessions.
-            (try-readwrite (noescape "~/.local/share/crush"))
-            (try-readwrite (noescape "~/.config/crush"))
-
-            (add-pkg-deps commonPkgs)
-            (add-pkg-deps extraPkgs)
-          ]
-        ));
-
       makeJailedOpencode = {extraPkgs ? []}:
         jail "opencode" pkgs-unstable.opencode (with jail.combinators; (
           commonJailOptions
           ++ [
-            # Give it a safe spot for its own config and cache.
-            # This also lets it remember things between sessions.
             (try-readwrite (noescape "~/.config/opencode"))
             (try-readwrite (noescape "~/.local/share/opencode"))
             (try-readwrite (noescape "~/.local/state/opencode"))
@@ -86,37 +69,23 @@
           ]
         ));
 
-      makeJailedLetta = {extraPkgs ? []}:
-        jail "letta" llm-agents.packages.${system}.letta-code (with jail.combinators; (
-          commonJailOptions
-          ++ [
-            # Give it a safe spot for its own config and cache.
-            # This also lets it remember things between sessions.
-            gui # for opening ade browser
-            (try-readwrite (noescape "~/.letta"))
-            (add-pkg-deps commonPkgs)
-            (add-pkg-deps extraPkgs)
-          ]
-        ));
+      PI = llm-agents.packages.${system}.pi;
 
-      makeJailedForge = {extraPkgs ? []}:
-        jail "forge" llm-agents.packages.${system}.forge (with jail.combinators; (
+      makeJailedPI = {extraPkgs ? []}:
+        jail "pi" PI (with jail.combinators; (
           commonJailOptions
           ++ [
-            # Give it a safe spot for its own config and cache.
-            # This also lets it remember things between sessions.
-            gui # for opening ade browser
-            (try-readwrite (noescape "~/.forge"))
+            (try-readwrite (noescape "~/.pi"))
+            (try-readonly (noescape "~/lisp-pi"))
             (add-pkg-deps commonPkgs)
+            (add-pkg-deps [pkgs.sbcl])
             (add-pkg-deps extraPkgs)
           ]
         ));
     in {
       lib = {
-        inherit makeJailedCrush;
         inherit makeJailedOpencode;
-        inherit makeJailedLetta;
-        inherit makeJailedForge;
+        inherit makeJailedPI;
       };
 
       devShells.default = pkgs.mkShell {
@@ -124,10 +93,8 @@
 
         packages = [
           pkgs.zsh
-          (makeJailedCrush {})
           (makeJailedOpencode {})
-          (makeJailedLetta {})
-          (makeJailedForge {})
+          (makeJailedPI {})
         ];
 
         shellHook = ''
