@@ -76,7 +76,7 @@
           commonJailOptions
           ++ [
             (try-readwrite (noescape "~/.pi"))
-            (try-readonly (noescape "~/lisp-pi"))
+            (try-readwrite (noescape "~/pi-packages"))
             (add-pkg-deps commonPkgs)
             (add-pkg-deps [pkgs.sbcl])
             (add-pkg-deps extraPkgs)
