@@ -78,7 +78,6 @@
             (try-readwrite (noescape "~/.pi"))
             (try-readwrite (noescape "~/pi-packages"))
             (add-pkg-deps commonPkgs)
-            (add-pkg-deps [pkgs.sbcl])
             (add-pkg-deps extraPkgs)
           ]
         ));
